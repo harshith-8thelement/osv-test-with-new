@@ -11,6 +11,8 @@ Strategy:
   - Filters only HIGH / CRITICAL (CVSS >= 7.0)
   - No emojis in output
   - Full advisory list shown (no truncation)
+
+  
 """
 
 import json
