@@ -12,6 +12,9 @@ Strategy:
   - No emojis in output
   - Full advisory list shown (no truncation)
 
+
+
+
   
 """
 
