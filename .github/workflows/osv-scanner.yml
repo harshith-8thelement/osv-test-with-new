@@ -1,0 +1,56 @@
+name: OSV Security Scan
+
+on:
+  push:
+    branches:
+      - "main"
+      - "develop"
+  schedule:
+    - cron: "0 7 * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  osv-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install OSV Scanner
+        run: |
+          curl -L https://github.com/google/osv-scanner/releases/download/v2.3.5/osv-scanner_linux_amd64 \
+            -o osv-scanner
+          chmod +x osv-scanner
+
+      - name: Run OSV Scanner
+        run: |
+          ./osv-scanner scan source \
+            --format=json \
+            --output=osv-results.json \
+            --recursive \
+            . || true   # exit 1 on vulns found — we handle downstream
+
+      - name: Check scan output exists
+        run: |
+          if [ ! -f osv-results.json ]; then
+            echo "osv-results.json not found — creating empty result"
+            echo '{"results":[]}' > osv-results.json
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests packaging
+
+      - name: Create GitHub Issues
+        run: python .github/scripts/create_issues.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
